@@ -12,7 +12,8 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleEmailLogin = async (e) => {
+  const handleEmailLogin = async (e) => 
+    {
     e.preventDefault();
     setIsLoading(true);
     try {
@@ -25,7 +26,8 @@ export default function Login() {
     }
   };
 
-  const handleGoogleLogin = async () => {
+  const handleGoogleLogin = async () => 
+    {
     setIsLoading(true);
     try {
       const provider = new GoogleAuthProvider();
