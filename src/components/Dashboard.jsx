@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../firebase-config';
 import { signOut } from 'firebase/auth';
+import Lottie from 'lottie-react';
+import loadingAnimation from '../assets/loading.json'; 
 import { 
   Search,
   UserCircle,
@@ -12,6 +14,18 @@ import {
   ChevronDown,
   Upload
 } from 'lucide-react';
+
+const LoadingAnimation = () => {
+  return (
+    <div className="w-5 h-5"> {/* Adjust size as needed */}
+      <Lottie
+        animationData={loadingAnimation}
+        loop={true}
+        style={{ width: '100%', height: '100%' }}
+      />
+    </div>
+  );
+};
 
 function useDebounce(value, delay) {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -270,13 +284,13 @@ export default function Dashboard() {
             </p>
           
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                {isLoading ? (
-                  <Loader2 className="h-5 w-5 text-gray-400 animate-spin" />
-                ) : (
-                  <Search className="h-5 w-5 text-gray-400" />
-                )}
-              </div>
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              {isLoading ? (
+                <LoadingAnimation />
+              ) : (
+                <Search className="h-5 w-5 text-gray-400" />
+              )}
+            </div>
               <input
                 type="text"
                 value={searchQuery}
