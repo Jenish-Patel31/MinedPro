@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { onAuthStateChanged } from 'firebase/auth';
 import { useState, useEffect } from 'react';
 import { auth } from './firebase-config';
@@ -6,6 +6,13 @@ import Login from './components/Login';
 import SignUp from './components/SignUp';
 import Dashboard from './components/Dashboard';
 import CompanyPage from './components/CompanyPage';
+import ChatbotPage from './components/ChatbotPage';
+
+// Add route authentication wrapper
+function RequireAuth({ children }) {
+  const location = useLocation();
+  return auth.currentUser ? children : <Navigate to="/login" state={{ from: location }} replace />;
+}
 
 function App() {
   const [user, setUser] = useState(null);
@@ -13,6 +20,11 @@ function App() {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      // Add additional user validation if needed
+      if (currentUser && !currentUser.emailVerified) {
+        console.warn('Email not verified');
+        // Consider adding email verification requirement
+      }
       setUser(currentUser);
       setLoading(false);
     });
@@ -30,11 +42,29 @@ function App() {
 
   return (
     <Routes>
-      <Route path="/login" element={!user ? <Login /> : <Navigate to="/dashboard" />} />
-      <Route path="/signup" element={!user ? <SignUp /> : <Navigate to="/dashboard" />} />
-      <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/login" />} />
-      <Route path="/company/:symbol" element={<CompanyPage />} />
-      <Route path="/" element={<Navigate to={user ? "/dashboard" : "/login"} />} />
+      <Route path="/login" element={!user ? <Login /> : <Navigate to="/dashboard" replace />} />
+      <Route path="/signup" element={!user ? <SignUp /> : <Navigate to="/dashboard" replace />} />
+      
+      {/* Protected Routes */}
+      <Route path="/dashboard" element={
+        <RequireAuth>
+          <Dashboard />
+        </RequireAuth>
+      } />
+      
+      <Route path="/company/:symbol" element={
+        <RequireAuth>
+          <CompanyPage />
+        </RequireAuth>
+      } />
+      
+      <Route path="/chatbot" element={
+        <RequireAuth>
+          <ChatbotPage />
+        </RequireAuth>
+      } />
+
+      <Route path="/" element={<Navigate to={user ? "/dashboard" : "/login"} replace />} />
     </Routes>
   );
 }
