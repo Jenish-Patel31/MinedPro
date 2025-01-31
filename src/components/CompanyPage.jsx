@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import Lottie from 'lottie-react';
 import loadingAnimation from '../assets/loading.json';
+import FinancialDashboard from '../components/FinancialDashboard';
 import {
   ArrowLeft,
   BarChart,
@@ -260,16 +261,12 @@ export default function CompanyPage() {
             {renderMetricsSection(sectionKey, metrics)}
           </div>
         ))}
-  
-        {/* Disclaimer
-        <div className="mt-8 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-          <p className="text-sm text-yellow-800 text-center">
-            📊 Data shown is from {companyData.quarter} quarterly results
-            {companyData.extraction_date && (
-              <>, extracted on {new Date(companyData.extraction_date).toLocaleString()}</>
-            )}
-          </p>
-        </div> */}
+
+        
+        <div className="mb-8">
+          <FinancialDashboard symbol={companyData.stock_name} />
+        </div>
+
       </div>
     </div>
   );
