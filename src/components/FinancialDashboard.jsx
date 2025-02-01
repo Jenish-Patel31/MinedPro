@@ -85,6 +85,15 @@ const MiniChart = ({ data, type, color, title }) => {
   const chartHeight = 50;
   const chartWidth = 120;
 
+  const CustomMiniBar = (props) => {
+    const { x, y, width, height, value } = props;
+    const fill = value < 0 ? '#ef4444' : color;
+    const yPos = value >= 0 ? y : y + height;
+    const barHeight = Math.abs(height);
+    
+    return <rect x={x} y={yPos} width={width} height={barHeight} fill={fill} />;
+  };
+
   const renderMiniChart = () => {
     const commonProps = {
       data,
@@ -158,12 +167,15 @@ const MiniChart = ({ data, type, color, title }) => {
             />
           </AreaChart>
         );
-      case 'bar':
-        return (
-          <BarChart {...commonProps}>
-            <Bar dataKey="value" fill={color} />
-          </BarChart>
-        );
+        case 'bar':
+          return (
+            <BarChart {...commonProps}>
+              <Bar 
+                dataKey="value" 
+                shape={<CustomMiniBar />}
+              />
+            </BarChart>
+          );
       case 'composed':
         return (
           <ComposedChart {...commonProps}>
@@ -213,9 +225,19 @@ const renderExpandedChart = (metric, data) => {
     margin: { top: 10, right: 30, left: 20, bottom: 0 }
   };
 
+  
   if (metric.customRender) {
     return metric.customRender(data);
   }
+
+  const CustomBar = (props) => {
+    const { x, y, width, height, value } = props;
+    const fill = value < 0 ? '#ef4444' : metric.color; // Red for negative values
+    const yPos = value >= 0 ? y : y + height;
+    const barHeight = Math.abs(height);
+    
+    return <rect x={x} y={yPos} width={width} height={barHeight} fill={fill} />;
+  };
 
   switch (metric.type) {
     case 'line':
@@ -229,17 +251,21 @@ const renderExpandedChart = (metric, data) => {
           <Line type="monotone" dataKey="value" stroke={metric.color} name={metric.title} />
         </LineChart>
       );
-    case 'bar':
-      return (
-        <BarChart {...commonProps}>
-          <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-          <XAxis dataKey="date" />
-          <YAxis />
-          <Tooltip content={<CustomTooltip />} />
-          <Legend />
-          <Bar dataKey="value" fill={metric.color} name={metric.title} />
-        </BarChart>
-      );
+      case 'bar':
+        return (
+          <BarChart {...commonProps}>
+            <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+            <XAxis dataKey="date" />
+            <YAxis />
+            <Tooltip content={<CustomTooltip />} />
+            <Legend />
+            <Bar 
+              dataKey="value" 
+              name={metric.title}
+              shape={<CustomBar />}
+            />
+          </BarChart>
+        );
     case 'area':
       return (
         <AreaChart {...commonProps}>
@@ -454,13 +480,14 @@ const FinancialDashboard = ({ symbol }) => {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
+          credentials: 'include',  // Add this line
           body: JSON.stringify({ stockName: symbol }),
         });
-
+    
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-
+    
         const data = await response.json();
         setStockData(data);
       } catch (err) {
