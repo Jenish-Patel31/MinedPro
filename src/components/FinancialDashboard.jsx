@@ -8,15 +8,26 @@ import {
 } from 'recharts';
 import { ChevronDown, ChevronUp, TrendingUp, TrendingDown, Loader2 } from 'lucide-react';
 
+// const COLORS = {
+//   primary: '#2563eb',
+//   secondary: '#6366f1',
+//   success: '#10b981',
+//   warning: '#f59e0b',
+//   danger: '#dc2626',
+//   purple: '#6366f1',
+//   cyan: '#06b6d4',
+//   pink: '#ec4899',
+// };
+
 const COLORS = {
-  primary: '#2563eb',
-  secondary: '#6366f1',
-  success: '#10b981',
-  warning: '#f59e0b',
-  danger: '#dc2626',
-  purple: '#6366f1',
-  cyan: '#06b6d4',
-  pink: '#ec4899',
+  primary: '#9cbbff',
+  secondary: '#9cbbff',
+  success: '#9cbbff',
+  warning: '#9cbbff',
+  danger: '#9cbbff',
+  purple: '#9cbbff',
+  cyan: '#9cbbff',
+  pink: '#9cbbff',
 };
 
 const TIME_PERIODS = [
@@ -26,12 +37,6 @@ const TIME_PERIODS = [
   { label: '1Y', months: 12 },
   { label: 'ALL', months: 999 }
 ];
-
-const Card = ({ children, className = '' }) => (
-  <div className={`bg-white rounded-lg shadow-sm ${className}`}>
-    {children}
-  </div>
-);
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
@@ -73,229 +78,347 @@ const filterDataByTime = (data, period) => {
   if (months === 999) return data;
 
   const sortedData = [...data].sort((a, b) => new Date(a.date) - new Date(b.date));
-  return sortedData.slice(0, months);
+  return sortedData.slice(-months);
 };
 
-const ChartCard = ({ title, data, type = 'line', color = COLORS.primary, height = 300, customRender }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [timePeriod, setTimePeriod] = useState('1Y');
-  
-  const filteredData = useMemo(() => 
-    filterDataByTime(data, timePeriod), 
-    [data, timePeriod]
-  );
+const MiniChart = ({ data, type, color, title }) => {
+  const chartHeight = 50;
+  const chartWidth = 120;
 
-  const renderChart = () => {
+  const renderMiniChart = () => {
     const commonProps = {
-      data: filteredData,
-      margin: { top: 10, right: 30, left: 20, bottom: 0 },
+      data,
+      width: chartWidth,
+      height: chartHeight
     };
 
-
-    // If customRender is provided, use it
-    if (customRender) {
-      return customRender(filteredData, isExpanded);
+    // Special handling for combined metrics
+    if (data && data[0] && ('metric1' in data[0] || 'metric2' in data[0])) {
+      if (title === 'Profitability Comparison') {
+        return (
+          <ComposedChart {...commonProps}>
+            <Bar 
+              dataKey="metric1" 
+              fill={COLORS.primary} 
+              strokeWidth={0}
+              barSize={4}
+            />
+            <Line 
+              type="monotone" 
+              dataKey="metric2" 
+              stroke={COLORS.success} 
+              dot={false}
+              strokeWidth={1.5}
+            />
+          </ComposedChart>
+        );
+      }
+      return (
+        <ComposedChart {...commonProps}>
+          <Area 
+            type="monotone" 
+            dataKey="metric1" 
+            fill={COLORS.success} 
+            stroke={COLORS.success} 
+            fillOpacity={0.3}
+          />
+          <Area 
+            type="monotone" 
+            dataKey="metric2" 
+            fill={COLORS.danger} 
+            stroke={COLORS.danger} 
+            fillOpacity={0.3}
+          />
+        </ComposedChart>
+      );
     }
 
     switch (type) {
       case 'line':
         return (
           <LineChart {...commonProps}>
-            <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-            <XAxis dataKey="date" angle={-45} textAnchor="end" height={60} />
-            <YAxis />
-            <Tooltip content={<CustomTooltip />} />
-            <Legend />
             <Line 
               type="monotone" 
               dataKey="value" 
               stroke={color} 
+              dot={false} 
               strokeWidth={2}
-              dot={isExpanded}
-              name={title}
             />
           </LineChart>
-        );
-      case 'bar':
-        return (
-          <BarChart {...commonProps}>
-            <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-            <XAxis dataKey="date" angle={-45} textAnchor="end" height={60} />
-            <YAxis />
-            <Tooltip content={<CustomTooltip />} />
-            <Legend />
-            <Bar dataKey="value" fill={color} name={title} />
-          </BarChart>
         );
       case 'area':
         return (
           <AreaChart {...commonProps}>
-            <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-            <XAxis dataKey="date" angle={-45} textAnchor="end" height={60} />
-            <YAxis />
-            <Tooltip content={<CustomTooltip />} />
-            <Legend />
-            <Area
-              type="monotone"
-              dataKey="value"
-              fill={color}
-              stroke={color}
-              fillOpacity={0.3}
-              name={title}
+            <Area 
+              type="monotone" 
+              dataKey="value" 
+              fill={color} 
+              stroke={color} 
+              fillOpacity={0.3} 
             />
           </AreaChart>
         );
-
-        case 'radar':
+      case 'bar':
         return (
-          <RadarChart {...commonProps} outerRadius={90}>
-            <PolarGrid />
-            <PolarAngleAxis dataKey="date" />
-            <PolarRadiusAxis />
-            <Radar
-              dataKey="value"
-              stroke={color}
-              fill={color}
-              fillOpacity={0.6}
-              name={title}
-            />
-            <Tooltip content={<CustomTooltip />} />
-            <Legend />
-          </RadarChart>
+          <BarChart {...commonProps}>
+            <Bar dataKey="value" fill={color} />
+          </BarChart>
         );
-
-      case 'radialBar':
-        return (
-          <RadialBarChart
-            {...commonProps}
-            innerRadius="30%"
-            outerRadius="100%"
-            barSize={10}
-            startAngle={180}
-            endAngle={0}
-          >
-            <RadialBar
-              dataKey="value"
-              fill={color}
-              name={title}
-              label={{ position: 'insideStart', fill: '#fff' }}
-            />
-            <Legend />
-            <Tooltip content={<CustomTooltip />} />
-          </RadialBarChart>
-        );
-
-      
-
-      case 'pie':
-        return (
-          <PieChart {...commonProps}>
-            <Pie
-              data={filteredData}
-              dataKey="value"
-              nameKey="date"
-              cx="50%"
-              cy="50%"
-              fill={color}
-              label
-            >
-              {filteredData.map((entry, index) => (
-                <Cell 
-                  key={`cell-${index}`} 
-                  fill={COLORS[Object.keys(COLORS)[index % Object.keys(COLORS).length]]} 
-                />
-              ))}
-            </Pie>
-            <Tooltip content={<CustomTooltip />} />
-            <Legend />
-          </PieChart>
-        );
-
-      case 'treemap':
-        return (
-          <Treemap
-            data={filteredData.map(item => ({
-              name: item.date,
-              size: item.value,
-            }))}
-            dataKey="size"
-            stroke="#fff"
-            fill={color}
-          >
-            <Tooltip content={<CustomTooltip />} />
-          </Treemap>
-        );
-        
       case 'composed':
         return (
           <ComposedChart {...commonProps}>
-            <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-            <XAxis dataKey="date" angle={-45} textAnchor="end" height={60} />
-            <YAxis />
-            <Tooltip content={<CustomTooltip />} />
-            <Legend />
-            <Bar dataKey="value" fill={color} name={title} />
+            <Bar dataKey="value" fill={color} />
             <Line 
               type="monotone" 
               dataKey="value" 
               stroke={color} 
+              dot={false} 
               strokeWidth={2}
-              dot={isExpanded}
-              name={`${title} Trend`}
             />
           </ComposedChart>
         );
-      
       default:
-        return null;
+        return (
+          <LineChart {...commonProps}>
+            <Line 
+              type="monotone" 
+              dataKey="value" 
+              stroke={color} 
+              dot={false} 
+              strokeWidth={2}
+            />
+          </LineChart>
+        );
     }
   };
 
-  const getGrowthRate = () => {
-    if (!filteredData || filteredData.length < 2) return 0;
+  if (!data || data.length === 0) {
+    return (
+      <div className="flex items-center justify-center w-full h-full">
+        <div className="text-gray-400 text-xs">No data</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center justify-center">
+      {renderMiniChart()}
+    </div>
+  );
+};
+
+const renderExpandedChart = (metric, data) => {
+  const commonProps = {
+    data,
+    margin: { top: 10, right: 30, left: 20, bottom: 0 }
+  };
+
+  if (metric.customRender) {
+    return metric.customRender(data);
+  }
+
+  switch (metric.type) {
+    case 'line':
+      return (
+        <LineChart {...commonProps}>
+          <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+          <XAxis dataKey="date" />
+          <YAxis />
+          <Tooltip content={<CustomTooltip />} />
+          <Legend />
+          <Line type="monotone" dataKey="value" stroke={metric.color} name={metric.title} />
+        </LineChart>
+      );
+    case 'bar':
+      return (
+        <BarChart {...commonProps}>
+          <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+          <XAxis dataKey="date" />
+          <YAxis />
+          <Tooltip content={<CustomTooltip />} />
+          <Legend />
+          <Bar dataKey="value" fill={metric.color} name={metric.title} />
+        </BarChart>
+      );
+    case 'area':
+      return (
+        <AreaChart {...commonProps}>
+          <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+          <XAxis dataKey="date" />
+          <YAxis />
+          <Tooltip content={<CustomTooltip />} />
+          <Legend />
+          <Area 
+            type="monotone" 
+            dataKey="value" 
+            fill={metric.color} 
+            stroke={metric.color} 
+            name={metric.title} 
+          />
+        </AreaChart>
+      );
+    case 'radar':
+      return (
+        <RadarChart {...commonProps} outerRadius={90}>
+          <PolarGrid />
+          <PolarAngleAxis dataKey="date" />
+          <PolarRadiusAxis />
+          <Radar 
+            dataKey="value" 
+            stroke={metric.color} 
+            fill={metric.color} 
+            fillOpacity={0.6} 
+            name={metric.title} 
+          />
+          <Tooltip content={<CustomTooltip />} />
+          <Legend />
+        </RadarChart>
+      );
+    case 'treemap':
+      return (
+        <Treemap
+          data={data.map(item => ({
+            name: item.date,
+            size: item.value,
+          }))}
+          dataKey="size"
+          stroke="#fff"
+          fill={metric.color}
+        >
+          <Tooltip content={<CustomTooltip />} />
+        </Treemap>
+      );
+    default:
+      return (
+        <ComposedChart {...commonProps}>
+          <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+          <XAxis dataKey="date" />
+          <YAxis />
+          <Tooltip content={<CustomTooltip />} />
+          <Legend />
+          <Bar dataKey="value" fill={metric.color} name={metric.title} />
+          <Line 
+            type="monotone" 
+            dataKey="value" 
+            stroke={metric.color} 
+            name={`${metric.title} Trend`} 
+          />
+        </ComposedChart>
+      );
+  }
+};
+
+const MetricsList = ({ metrics, sectionTitle }) => {
+  const [expandedItem, setExpandedItem] = useState(null);
+  const [timePeriod, setTimePeriod] = useState('1Y');
+
+  const toggleExpanded = (index) => {
+    setExpandedItem(expandedItem === index ? null : index);
+  };
+
+  const getGrowthRate = (data) => {
+    if (!data || data.length < 2) return 0;
     
-    // Handle both standard and custom data structures
     const getValue = (item) => {
-      if (item.value !== undefined) return item.value;
       if (item.metric1 !== undefined) return item.metric1;
+      if (item.value !== undefined) return item.value;
       return 0;
     };
 
-    const latest = getValue(filteredData[filteredData.length - 1]);
-    const previous = getValue(filteredData[filteredData.length - 2]);
+    const latest = getValue(data[data.length - 1]);
+    const previous = getValue(data[data.length - 2]);
     return previous !== 0 ? ((latest - previous) / previous) * 100 : 0;
   };
 
-  const growthRate = getGrowthRate();
-
   return (
-    <Card className={`transition-all duration-300 ${isExpanded ? 'col-span-full' : ''}`}>
-      <div className="p-4">
-        <div className="flex justify-between items-center mb-4">
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
-            <div className={`flex items-center text-sm ${growthRate >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-              {growthRate >= 0 ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
-              <span className="ml-1">{Math.abs(growthRate).toFixed(2)}% vs previous period</span>
-            </div>
-          </div>
-          <div className="flex items-center space-x-4">
-            <TimeFilter selectedPeriod={timePeriod} onChange={setTimePeriod} />
-            <button
-              onClick={() => setIsExpanded(!isExpanded)}
-              className="p-1 hover:bg-gray-100 rounded-full transition-colors"
-            >
-              {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-            </button>
-          </div>
-        </div>
-        <div style={{ height: isExpanded ? 500 : height }} className="transition-all duration-300">
-          <ResponsiveContainer width="100%" height="100%">
-            {renderChart()}
-          </ResponsiveContainer>
-        </div>
+    <div className="bg-white rounded-lg shadow">
+      <div className="p-4 border-b">
+        <h2 className="text-xl font-bold">{sectionTitle}</h2>
       </div>
-    </Card>
+      <div className="divide-y">
+        {metrics.map((metric, index) => {
+          const isExpanded = expandedItem === index;
+          const filteredData = filterDataByTime(metric.data || [], timePeriod);
+          const growthRate = getGrowthRate(filteredData);
+          
+          const latestValue = filteredData[filteredData.length - 1]?.metric1 || 
+                             filteredData[filteredData.length - 1]?.value || 0;
+                             
+          const avgValue = filteredData.length > 0 
+            ? filteredData.reduce((acc, curr) => {
+                const val = curr.metric1 !== undefined ? curr.metric1 : curr.value;
+                return acc + (val || 0);
+              }, 0) / filteredData.length 
+            : 0;
+
+          return (
+            <div key={metric.title} className="transition-all duration-300">
+              <div 
+                onClick={() => toggleExpanded(index)}
+                className="p-4 hover:bg-gray-50 cursor-pointer grid grid-cols-12 items-center gap-4"
+              >
+                <div className="col-span-3">
+                  <h3 className="font-semibold">{metric.title}</h3>
+                  <div className={`flex items-center text-sm ${growthRate >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                    {growthRate >= 0 ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
+                    <span className="ml-1">{Math.abs(growthRate).toFixed(2)}%</span>
+                  </div>
+                </div>
+                
+                <div className="col-span-2">
+                  <MiniChart 
+                    data={filteredData.slice(-12)} 
+                    type={metric.type} 
+                    color={metric.color}
+                    title={metric.title}
+                  />
+                </div>
+
+                <div className="col-span-6">
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-500">Latest</p>
+                      <p className="font-medium">₹{latestValue.toLocaleString('en-IN', {
+                        maximumFractionDigits: 2,
+                        minimumFractionDigits: 0
+                      })}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Average</p>
+                      <p className="font-medium">₹{avgValue.toLocaleString('en-IN', {
+                        maximumFractionDigits: 2,
+                        minimumFractionDigits: 0
+                      })}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">YoY Change</p>
+                      <p className="font-medium">{growthRate.toFixed(2)}%</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="col-span-1 text-right">
+                  {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                </div>
+              </div>
+
+              {isExpanded && (
+                <div className="p-4 bg-gray-50">
+                  <div className="mb-4 flex justify-end">
+                    <TimeFilter selectedPeriod={timePeriod} onChange={setTimePeriod} />
+                  </div>
+                  <div className="h-96">
+                    <ResponsiveContainer width="100%" height="100%">
+                      {renderExpandedChart(metric, filteredData)}
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 };
 
@@ -339,7 +462,6 @@ const FinancialDashboard = ({ symbol }) => {
         }
 
         const data = await response.json();
-        console.log('API Response:', data);
         setStockData(data);
       } catch (err) {
         setError(err.message);
@@ -351,8 +473,6 @@ const FinancialDashboard = ({ symbol }) => {
     fetchData();
   }, [symbol]);
 
-  
-
   const profitLossMetrics = useMemo(() => {
     if (!stockData?.data?.profit_loss) return [];
     
@@ -360,13 +480,13 @@ const FinancialDashboard = ({ symbol }) => {
       {
         title: 'Revenue',
         data: transformData(stockData.data.profit_loss, 'Sales+'),
-        type: 'area',
+        type: 'bar',
         color: COLORS.primary
       },
       {
         title: 'Net Profit',
         data: transformData(stockData.data.profit_loss, 'Net Profit+'),
-        type: 'line',
+        type: 'bar',
         color: COLORS.success
       },
       {
@@ -374,11 +494,15 @@ const FinancialDashboard = ({ symbol }) => {
         data: transformData(stockData.data.profit_loss, 'Operating Profit'),
         type: 'bar',
         color: COLORS.warning
+      },
+      {
+        title: 'Profit Before Tax',
+        data: transformData(stockData.data.profit_loss, 'Profit before tax'),
+        type: 'bar',
+        color: COLORS.warning
       }
     ];
   }, [stockData]);
-
-
 
   const balanceSheetMetrics = useMemo(() => {
     if (!stockData?.data?.balance_sheet) return [];
@@ -387,38 +511,26 @@ const FinancialDashboard = ({ symbol }) => {
       { 
         title: 'Total Assets',
         data: transformData(stockData.data.balance_sheet, 'Total Assets'),
-        type: 'line',
+        type: 'bar',
         color: COLORS.primary
       },
       {
         title: 'Investments',
         data: transformData(stockData.data.balance_sheet, 'Investments'),
-        type: 'area',
+        type: 'bar',
         color: COLORS.success
       },
       {
         title: 'Total Liabilities',
         data: transformData(stockData.data.balance_sheet, 'Total Liabilities'),
-        type: 'line',
-        color: COLORS.danger
-      },
-      {
-        title: 'Capital Work in Progress',
-        data: transformData(stockData.data.balance_sheet, 'CWIP'),
         type: 'bar',
-        color: COLORS.purple
+        color: COLORS.danger
       },
       {
         title: 'Fixed Assets Growth',
         data: transformData(stockData.data.balance_sheet, 'Fixed Assets+'),
         type: 'composed',
         color: COLORS.pink
-      },
-      {
-        title: 'Other Assets',
-        data: transformData(stockData.data.balance_sheet, 'Other Assets+'),
-        type: 'area',
-        color: COLORS.cyan
       }
     ];
   }, [stockData]);
@@ -442,132 +554,134 @@ const FinancialDashboard = ({ symbol }) => {
       {
         title: 'Financing Cash Flow',
         data: transformData(stockData.data.cash_flow, 'Cash from Financing Activity+'),
-        type: 'radar',
+        type: 'bar',
         color: COLORS.purple
       },
       {
         title: 'Net Cash Flow',
         data: transformData(stockData.data.cash_flow, 'Net Cash Flow'),
-        type: 'treemap',
+        type: 'bar',
         color: COLORS.primary
       }
     ];
   }, [stockData]);
 
-
   const comparisonMetrics = useMemo(() => {
     if (!stockData?.data?.profit_loss || !stockData?.data?.balance_sheet) return [];
 
-    // Function to calculate year-over-year growth
-    const calculateGrowth = (data) => {
-        return data.map((item, index, arr) => ({
-            date: item.date,
-            value: index > 0 ? ((item.value - arr[index-1].value) / arr[index-1].value) * 100 : 0,
-            originalValue: item.value
-        }));
-    };
-
-    // Function to combine multiple metrics
     const combineMetrics = (metric1, metric2) => {
-        const data1 = transformData(stockData.data.profit_loss, metric1) || [];
-        const data2 = transformData(stockData.data.profit_loss, metric2) || [];
-        
-        return data1.map((item, index) => ({
-            date: item.date,
-            metric1: item.value || 0,
-            metric2: data2[index]?.value || 0
-        })).filter(item => item.date && (item.metric1 !== 0 || item.metric2 !== 0));
+      const data1 = transformData(stockData.data.profit_loss, metric1) || [];
+      const data2 = transformData(stockData.data.profit_loss, metric2) || [];
+      
+      return data1.map((item, index) => ({
+        date: item.date,
+        metric1: item.value || 0,
+        metric2: data2[index]?.value || 0
+      })).filter(item => item.date && (item.metric1 !== 0 || item.metric2 !== 0));
     };
 
     const calculateAssetUtilization = () => {
-        const sales = transformData(stockData.data.profit_loss, 'Sales+') || [];
-        const assets = transformData(stockData.data.balance_sheet, 'Total Assets') || [];
-        
-        // Create a map of dates to sales values
-        const salesMap = new Map(sales.map(item => [item.date, item.value]));
-        
-        return assets
-            .filter(item => item && item.value && salesMap.get(item.date))
-            .map(item => ({
-                date: item.date,
-                value: salesMap.get(item.date) ? (salesMap.get(item.date) / item.value) * 100 : 0
-            }))
-            .filter(item => !isNaN(item.value));
+      const sales = transformData(stockData.data.profit_loss, 'Sales+') || [];
+      const assets = transformData(stockData.data.balance_sheet, 'Total Assets') || [];
+      
+      const salesMap = new Map(sales.map(item => [item.date, item.value]));
+      
+      return assets
+        .filter(item => item && item.value && salesMap.get(item.date))
+        .map(item => ({
+          date: item.date,
+          value: salesMap.get(item.date) ? (salesMap.get(item.date) / item.value) * 100 : 0
+        }))
+        .filter(item => !isNaN(item.value));
     };
 
-    // Function to calculate ratios
-    const calculateRatio = (numerator, denominator) => {
-      const num = transformData(stockData.data.profit_loss, numerator) || [];
-      const den = transformData(stockData.data.profit_loss, denominator) || [];
-      
-      // Create a map of dates to denominator values for easy lookup
-      const denMap = new Map(den.map(item => [item.date, item.value]));
-      
-      return num
-          .filter(item => item && item.value !== undefined && denMap.get(item.date))
-          .map(item => ({
-              date: item.date,
-              value: denMap.get(item.date) ? (item.value / denMap.get(item.date)) * 100 : 0
-          }))
-          .filter(item => !isNaN(item.value));
-  };
-
-  return [
-    {
+    return [
+      {
         title: 'Profitability Comparison',
         data: combineMetrics('Operating Profit', 'Net Profit+'),
-        render: (data, isExpanded) => (
-            <ComposedChart height={isExpanded ? 500 : 300} data={data}>
-                <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                <XAxis dataKey="date" angle={-45} textAnchor="end" height={60} />
-                <YAxis />
-                <Tooltip content={<CustomTooltip />} />
-                <Legend />
-                <Bar dataKey="metric1" fill={COLORS.primary} name="Operating Profit" />
-                <Line type="monotone" dataKey="metric2" stroke={COLORS.success} name="Net Profit" strokeWidth={2} />
-                <ReferenceLine y={0} stroke="#666" />
-            </ComposedChart>
-        )
-    },
-    {
-        title: 'Revenue vs Expenses Growth',
-        data: combineMetrics('Sales+', 'Expenses+'),
-        render: (data, isExpanded) => (
-            <ComposedChart height={isExpanded ? 500 : 300} data={data}>
-                <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                <XAxis dataKey="date" angle={-45} textAnchor="end" height={60} />
-                <YAxis />
-                <Tooltip content={<CustomTooltip />} />
-                <Legend />
-                <Area type="monotone" dataKey="metric1" fill={COLORS.success} stroke={COLORS.success} name="Revenue" fillOpacity={0.3} />
-                <Area type="monotone" dataKey="metric2" fill={COLORS.danger} stroke={COLORS.danger} name="Expenses" fillOpacity={0.3} />
-            </ComposedChart>
-        )
-    },
-    {
-      title: 'Asset Utilization',
-      data: calculateAssetUtilization(),
-      render: (data, isExpanded) => (
-          <ComposedChart height={isExpanded ? 500 : 300} data={data}>
-              <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-              <XAxis dataKey="date" angle={-45} textAnchor="end" height={60} />
-              <YAxis />
-              <Tooltip content={<CustomTooltip />} />
-              <Legend />
-              <Bar dataKey="value" fill={COLORS.cyan} name="Asset Turnover Ratio" />
-              <Line type="monotone" dataKey="value" stroke={COLORS.cyan} name="Trend" strokeWidth={2} />
+        type: 'custom',
+        color: COLORS.primary,
+        customRender: (data) => (
+          <ComposedChart data={data}>
+            <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+            <XAxis dataKey="date" />
+            <YAxis />
+            <Tooltip content={<CustomTooltip />} />
+            <Legend />
+            <Bar 
+              dataKey="metric1" 
+              fill={COLORS.primary} 
+              name="Operating Profit"
+              strokeWidth={0}
+            />
+            <Line 
+              type="monotone" 
+              dataKey="metric2" 
+              stroke={COLORS.success} 
+              name="Net Profit" 
+              strokeWidth={2}
+              dot={false}
+            />
           </ComposedChart>
-      )
-  }
-];
-}, [stockData]);
+        )
+      },
+      {
+        title: 'Revenue vs Expenses',
+        data: combineMetrics('Sales+', 'Expenses+'),
+        type: 'custom',
+        color: COLORS.success,
+        customRender: (data) => (
+          <ComposedChart data={data}>
+            <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+            <XAxis dataKey="date" />
+            <YAxis />
+            <Tooltip content={<CustomTooltip />} />
+            <Legend />
+            <Area 
+              type="monotone" 
+              dataKey="metric1" 
+              fill={COLORS.success} 
+              stroke={COLORS.success} 
+              name="Revenue" 
+              fillOpacity={0.3}
+            />
+            <Area 
+              type="monotone" 
+              dataKey="metric2" 
+              fill={COLORS.danger} 
+              stroke={COLORS.danger} 
+              name="Expenses" 
+              fillOpacity={0.3}
+            />
+          </ComposedChart>
+        )
+      },
+      {
+        title: 'Asset Utilization',
+        data: calculateAssetUtilization(),
+        type: 'custom',
+        color: COLORS.cyan,
+        customRender: (data) => (
+          <ComposedChart data={data}>
+            <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+            <XAxis dataKey="date" />
+            <YAxis />
+            <Tooltip content={<CustomTooltip />} />
+            <Legend />
+            <Bar dataKey="value" fill={COLORS.cyan} name="Asset Turnover Ratio" />
+            <Line type="monotone" dataKey="value" stroke={COLORS.cyan} name="Trend" strokeWidth={2} />
+          </ComposedChart>
+        )
+      }
+    ];
+  }, [stockData]);
 
   if (loading) {
     return (
-      <div className="w-full h-96 flex items-center justify-center bg-white rounded-lg shadow-sm">
+      <div className="w-full h-96 flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-          <p className="text-gray-600">Loading financial data...</p>
+          <p className="text-gray-600">Loading financial analysis...</p>
         </div>
       </div>
     );
@@ -588,48 +702,18 @@ const FinancialDashboard = ({ symbol }) => {
 
   return (
     <div className="space-y-8">
-      <section>
-        <h2 className="text-2xl font-bold mb-4">Profit & Loss Analysis</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {profitLossMetrics.map((metric) => (
-            <ChartCard key={metric.title} {...metric} />
-          ))}
-        </div>
-      </section>
-
-      <section>
-        <h2 className="text-2xl font-bold mb-4">Balance Sheet Analysis</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {balanceSheetMetrics.map((metric) => (
-            <ChartCard key={metric.title} {...metric} />
-          ))}
-        </div>
-      </section>
-
-      <section>
-        <h2 className="text-2xl font-bold mb-4">Balance Sheet Analysis</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {cashFlowMetrics.map((metric) => (
-            <ChartCard key={metric.title} {...metric} />
-          ))}
-        </div>
-      </section>
-
-      <section>
-            <h2 className="text-2xl font-bold mb-4">Financial Analysis & Comparisons</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {comparisonMetrics.map((metric, index) => (
-                    <ChartCard
-                        key={index}
-                        title={metric.title}
-                        data={metric.data}
-                        type="custom"
-                        customRender={metric.render}
-                    />
-                ))}
-            </div>
-        </section>
-
+      {profitLossMetrics.length > 0 && (
+        <MetricsList metrics={profitLossMetrics} sectionTitle="Profit & Loss Analysis" />
+      )}
+      {balanceSheetMetrics.length > 0 && (
+        <MetricsList metrics={balanceSheetMetrics} sectionTitle="Balance Sheet Analysis" />
+      )}
+      {cashFlowMetrics.length > 0 && (
+        <MetricsList metrics={cashFlowMetrics} sectionTitle="Cash Flow Analysis" />
+      )}
+      {comparisonMetrics.length > 0 && (
+        <MetricsList metrics={comparisonMetrics} sectionTitle="Financial Analysis & Comparisons" />
+      )}
     </div>
   );
 };

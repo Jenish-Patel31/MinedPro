@@ -57,6 +57,8 @@ export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+
+  const API_URL = 'https://neel-search.onrender.com';
   
   const debouncedSearchTerm = useDebounce(searchQuery, 500);
 
@@ -92,7 +94,7 @@ export default function Dashboard() {
       setError('');
 
       try {
-        const response = await fetch(`/api/screener/api/company/search/?q=${encodeURIComponent(debouncedSearchTerm)}&v=3&fts=1`);
+        const response = await fetch(`${API_URL}/api/search?q=${encodeURIComponent(debouncedSearchTerm)}`);
         
         if (!response.ok) {
           throw new Error('Network response was not ok');
