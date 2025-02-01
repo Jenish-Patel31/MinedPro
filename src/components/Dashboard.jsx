@@ -21,6 +21,18 @@ import {
 
 const LoadingAnimation = () => {
   return (
+    <div className="w-64 h-64">
+      <Lottie
+        animationData={loadingAnimation}
+        loop={true}
+        style={{ width: '100%', height: '100%' }}
+      />
+    </div>
+  );
+};
+
+const SearchLoadingAnimation = () => {
+  return (
     <div className="w-5 h-5">
       <Lottie
         animationData={loadingAnimation}
@@ -84,14 +96,22 @@ export default function Dashboard() {
 
   useEffect(() => {
     const searchStocks = async () => {
-      if (!debouncedSearchTerm || debouncedSearchTerm.length < 2) {
+      if (!debouncedSearchTerm) {
         setSearchResults([]);
         setError('');
         return;
       }
 
+      if (debouncedSearchTerm.length < 2) {
+        setSearchResults([]);
+        setError('Type at least 2 characters to search');
+        setIsLoading(false);
+        return;
+      }
+
       setIsLoading(true);
       setError('');
+      setSearchResults([]); // Clear previous results while loading
 
       try {
         const response = await fetch(`${API_URL}/api/search?q=${encodeURIComponent(debouncedSearchTerm)}`);
@@ -200,7 +220,6 @@ export default function Dashboard() {
 
                 {showProfileMenu && (
                   <div className="absolute right-0 mt-4 w-64 rounded-2xl shadow-lg bg-sky-100/5 ring-1 ring-white ring-opacity-5 p-2">
-                    
                     <div className="p-1">
                       <button className="w-full px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-xl flex items-center transition-all duration-200">
                         <Settings className="h-4 w-4 mr-3" />
@@ -238,7 +257,7 @@ export default function Dashboard() {
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                 {isLoading ? (
-                  <LoadingAnimation />
+                  <SearchLoadingAnimation />
                 ) : (
                   <Search className="h-5 w-5 text-blue-600" />
                 )}
@@ -252,9 +271,13 @@ export default function Dashboard() {
               />
 
               {/* Search Results */}
-              {(searchQuery || error) && (
+              {(searchQuery || isLoading || error) && (
                 <div className="absolute w-full mt-2 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-10">
-                  {error ? (
+                  {isLoading ? (
+                    <div className="p-4 flex justify-center">
+                      <LoadingAnimation />
+                    </div>
+                  ) : error ? (
                     <div className="p-4 text-center text-gray-500">{error}</div>
                   ) : searchResults.length > 0 ? (
                     <div className="max-h-96 overflow-y-auto">
@@ -278,15 +301,7 @@ export default function Dashboard() {
                         </button>
                       ))}
                     </div>
-                  ) : searchQuery.length < 2 ? (
-                    <div className="p-4 text-center text-gray-500">
-                      Type at least 2 characters to search
-                    </div>
-                  ) : (
-                    <div className="p-4 text-center text-gray-500">
-                      No results found
-                    </div>
-                  )}
+                  ) : null}
                 </div>
               )}
             </div>
