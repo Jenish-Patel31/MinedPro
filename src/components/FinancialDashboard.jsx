@@ -480,14 +480,13 @@ const FinancialDashboard = ({ symbol }) => {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
-          credentials: 'include',  // Add this line
           body: JSON.stringify({ stockName: symbol }),
         });
-    
+
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-    
+
         const data = await response.json();
         setStockData(data);
       } catch (err) {
