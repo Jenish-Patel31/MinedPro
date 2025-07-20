@@ -96,5 +96,16 @@ npm install
 ```
 npm run dev
 ```
+## Screen Layout :
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/78291b99-eda6-4f74-bd6e-fd1a4ee1051c" />
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/859739c4-fba8-4c3a-a204-08ef76ed8392" />
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/1e2745a1-3831-41ba-bb83-a9a756b4523c" />
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/762ded49-22ea-4cfe-a42a-17b71972a849" />
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/24ff29c5-c5d0-4bfe-9b12-49941c190508" />
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/be70efee-f4c2-44d0-a3da-87b8b0788f7f" />
+<img width="2048" height="1046" alt="image" src="https://github.com/user-attachments/assets/c56a06e8-54b8-4502-a8ea-65c7eca25197" />
+<img width="2048" height="1046" alt="image" src="https://github.com/user-attachments/assets/953fa966-e7ff-44c6-aa73-0dcc0d524c2c" />
+
+
 
 🚀 **Happy Investing & Data Analysis!** 📈  
