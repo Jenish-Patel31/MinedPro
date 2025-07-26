@@ -3,7 +3,8 @@
 Welcome to **StockPro**! This is a **stock search and analysis web application** that allows users to retrieve real-time stock data, visualize market trends, and gain insights into various stocks.  
 
 <!--🔗 **Live Demo** – [StockPro on Vercel](https://stockpro-seven.vercel.app/)  -->
-🔗 **GitHub Repository** – [MinedPro](https://github.com/Jenish-Patel31/MinedPro)  
+🔗 **Video Demo** - [StockPro on Youtube]https://youtu.be/RLukVFwPwRM?si=vj7wgSmyvOu-2cnN
+🔗 **GitHub Repository** – [StockPro](https://github.com/Jenish-Patel31/MinedPro)    
 
 ## 🌟 **Project Overview**  
 
